@@ -2,7 +2,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <div class="logo">🏢</div>
+            <div class="logo">🕌</div>
             <h1 class="brand-name">ERP CISLAMO</h1>
         </div>
         
@@ -45,20 +45,96 @@
         <div class="container">
             <div class="page-header">
                 <h1>Gestão de Documentos</h1>
-                <button class="btn btn-primary" ng-click="toggleForm()">
-                    {{ showForm ? 'Cancelar' : '+ Novo Documento' }}
-                </button>
+                <div class="page-header-actions">
+                    <button class="btn btn-secondary" ng-click="toggleFilters()">
+                        <span ng-if="!showFilters">🔍</span>
+                        <span ng-if="showFilters">✕</span>
+                        {{ showFilters ? 'Ocultar Filtros' : 'Filtros' }}
+                    </button>
+                    <button class="btn btn-primary" ng-click="toggleForm()">
+                        {{ showForm ? 'Cancelar' : '+ Novo Documento' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-card" ng-if="!loading && allDocuments.length > 0 && showFilters">
+                <h3>Filtros</h3>
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label>Buscar</label>
+                        <input type="text" ng-model="filters.search" ng-change="applyFilters()" placeholder="Buscar por título ou descrição..." class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select ng-model="filters.category" ng-change="applyFilters()" class="form-control">
+                            <option ng-repeat="option in categoryOptions" value="{{ option.value }}">
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Criação (De)</label>
+                        <input type="date" ng-model="filters.dateFrom" ng-change="applyFilters()" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Criação (Até)</label>
+                        <input type="date" ng-model="filters.dateTo" ng-change="applyFilters()" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="button" ng-click="clearFilters()" class="btn btn-secondary" style="width: 100%;">
+                            Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+                <div class="filters-info" ng-if="documents.length !== allDocuments.length">
+                    <p>Mostrando {{ documents.length }} de {{ allDocuments.length }} documentos</p>
+                </div>
             </div>
 
             <div class="form-card" ng-if="showForm">
                 <h3>Novo Documento</h3>
-                <p class="info-message">
-                    Nota: Upload de arquivos requer implementação adicional com FormData.
-                </p>
+                <form ng-submit="createDocument()">
+                    <div class="form-group">
+                        <label>Título *</label>
+                        <input type="text" ng-model="newDocument.title" required class="form-control" placeholder="Digite o título do documento">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea ng-model="newDocument.description" class="form-control" rows="4" placeholder="Digite uma descrição para o documento"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select ng-model="newDocument.category" class="form-control">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="Relatório">Relatório</option>
+                            <option value="Manual">Manual</option>
+                            <option value="Política">Política</option>
+                            <option value="Contrato">Contrato</option>
+                            <option value="Plano">Plano</option>
+                            <option value="Orçamento">Orçamento</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Arquivo (opcional)</label>
+                        <input type="file" id="fileInput" onchange="angular.element(this).scope().onFileSelect(this)" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt">
+                        <small class="form-text text-muted">Formatos suportados: PDF, DOC, DOCX, XLS, XLSX, TXT</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" ng-click="toggleForm()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary" ng-disabled="!newDocument.title">
+                            Criar Documento
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <div class="documents-grid" ng-if="!loading">
-                <div class="document-card" ng-repeat="doc in documents track by doc.id">
+                <div class="document-card" ng-repeat="doc in documents track by doc.id" ng-click="viewDocument(doc)" style="cursor: pointer;">
                     <div class="document-icon">📄</div>
                     <div class="document-info">
                         <h3>{{ doc.title || 'Sem título' }}</h3>
@@ -69,8 +145,8 @@
                             <span ng-if="!doc.user || !doc.user.name">Por: Sistema</span>
                         </div>
                     </div>
-                    <div class="document-actions">
-                        <button class="btn btn-sm btn-danger" ng-click="deleteDocument(doc.id)">
+                    <div class="document-actions" ng-click="$event.stopPropagation()">
+                        <button class="btn btn-sm btn-danger" ng-click="deleteDocument(doc.id, $event)" title="Remover">
                             Remover
                         </button>
                     </div>
@@ -82,6 +158,44 @@
 
             <div class="loading" ng-if="loading">
                 Carregando...
+            </div>
+            
+            <!-- Modal para visualizar documento sem arquivo -->
+            <div class="modal-overlay" ng-if="showDocumentModal" ng-click="closeDocumentModal()">
+                <div class="modal-content" ng-click="$event.stopPropagation()">
+                    <div class="modal-header">
+                        <h2>{{ selectedDocument.title || 'Detalhes do Documento' }}</h2>
+                        <button class="modal-close" ng-click="closeDocumentModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="document-detail-item">
+                            <strong>Título:</strong>
+                            <p>{{ selectedDocument.title || 'Sem título' }}</p>
+                        </div>
+                        <div class="document-detail-item">
+                            <strong>Descrição:</strong>
+                            <p>{{ selectedDocument.description || 'Sem descrição' }}</p>
+                        </div>
+                        <div class="document-detail-item">
+                            <strong>Categoria:</strong>
+                            <p>{{ selectedDocument.category || 'N/A' }}</p>
+                        </div>
+                        <div class="document-detail-item">
+                            <strong>Criado por:</strong>
+                            <p>{{ selectedDocument.user ? selectedDocument.user.name : 'Sistema' }}</p>
+                        </div>
+                        <div class="document-detail-item" ng-if="selectedDocument.created_at">
+                            <strong>Data de Criação:</strong>
+                            <p>{{ selectedDocument.created_at | date:'dd/MM/yyyy HH:mm' }}</p>
+                        </div>
+                        <div class="document-info-message">
+                            <p>ℹ️ Este documento não possui arquivo anexado.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" ng-click="closeDocumentModal()">Fechar</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>

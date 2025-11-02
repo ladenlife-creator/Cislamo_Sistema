@@ -52,6 +52,49 @@ Route::post('/register', function (\Illuminate\Http\Request $request) {
     return app(\App\Http\Controllers\API\V1\Auth\AuthController::class)->register($request);
 });
 
+// Rota para servir arquivos de documentos (pública mas com verificação básica)
+Route::get('/documents/file/{path}', function(\Illuminate\Http\Request $request, $path) {
+    try {
+        $decodedPath = urldecode($path);
+        
+        // Remover barra inicial se existir
+        $decodedPath = ltrim($decodedPath, '/');
+        
+        // Verificar se o arquivo existe no storage público
+        $fullPath = storage_path('app/public/' . $decodedPath);
+        
+        if (!file_exists($fullPath)) {
+            // Tentar em public/documents
+            $fullPath = public_path('documents/' . basename($decodedPath));
+        }
+        
+        if (!file_exists($fullPath)) {
+            // Tentar apenas o nome do arquivo em storage/app/public
+            $fullPath = storage_path('app/public/' . basename($decodedPath));
+        }
+        
+        if (!file_exists($fullPath)) {
+            return response()->json(['message' => 'Arquivo não encontrado'], 404);
+        }
+        
+        // Verificar se é um arquivo válido (não permitir acesso a diretórios)
+        if (!is_file($fullPath)) {
+            return response()->json(['message' => 'Arquivo inválido'], 400);
+        }
+        
+        // Determinar content-type
+        $mimeType = mime_content_type($fullPath) ?: 'application/octet-stream';
+        
+        return response()->file($fullPath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . basename($fullPath) . '"'
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Document file serve error: ' . $e->getMessage());
+        return response()->json(['message' => $e->getMessage()], 500);
+    }
+})->where('path', '.*');
+
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [\App\Http\Controllers\API\V1\Auth\AuthController::class, 'logout']);
     
@@ -287,22 +330,68 @@ Route::middleware('auth:api')->group(function () {
         }
     });
     
+    Route::get('/documents/{id}', function(\Illuminate\Http\Request $request, $id) {
+        try {
+            $document = DB::table('documents')
+                ->leftJoin('users', 'documents.user_id', '=', 'users.id')
+                ->where('documents.id', $id)
+                ->select(
+                    'documents.id',
+                    'documents.title',
+                    'documents.description',
+                    'documents.category',
+                    'documents.file_path',
+                    'documents.file_type',
+                    'documents.file_size',
+                    'documents.created_at',
+                    'users.name as user_name'
+                )
+                ->first();
+            
+            if (!$document) {
+                return response()->json(['message' => 'Documento não encontrado'], 404);
+            }
+            
+            $response = [
+                'id' => $document->id,
+                'title' => $document->title,
+                'description' => $document->description ?? 'Sem descrição',
+                'category' => $document->category ?? 'Outro',
+                'file_path' => $document->file_path ?? null,
+                'file_type' => $document->file_type ?? null,
+                'file_size' => $document->file_size ?? null,
+                'created_at' => $document->created_at,
+                'user' => [
+                    'name' => $document->user_name ?? 'Sistema'
+                ]
+            ];
+            
+            return response()->json($response);
+        } catch (\Exception $e) {
+            \Log::error('Document get error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    });
+    
     Route::post('/documents', function(\Illuminate\Http\Request $request) {
         try {
             $user = $request->user();
             
-            // Criar documento na tabela documents
-            $documentId = DB::table('documents')->insertGetId([
+            // Preparar dados do documento
+            $documentData = [
                 'title' => $request->input('title', 'Novo Documento'),
                 'description' => $request->input('description', ''),
                 'category' => $request->input('category', 'Outro'),
-                'file_path' => $request->input('file_path', null),
-                'file_type' => $request->input('file_type', null),
-                'file_size' => $request->input('file_size', null),
+                'file_path' => $request->input('file_path', ''),
+                'file_type' => $request->input('file_type', ''),
+                'file_size' => $request->input('file_size', 0),
                 'user_id' => $user->id ?? null,
                 'created_at' => now(),
                 'updated_at' => now()
-            ]);
+            ];
+            
+            // Criar documento na tabela documents
+            $documentId = DB::table('documents')->insertGetId($documentData);
             
             $document = DB::table('documents')
                 ->leftJoin('users', 'documents.user_id', '=', 'users.id')
@@ -408,6 +497,7 @@ Route::middleware('auth:api')->group(function () {
             return response()->json(['message' => $e->getMessage()], 500);
         }
     });
+    
 });
 
 //v1 group

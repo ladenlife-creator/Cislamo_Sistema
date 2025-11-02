@@ -1,36 +1,120 @@
 <div class="landing-page">
     <!-- Hero Section -->
     <section class="hero">
+        <div class="hero-background">
+            <div class="hero-pattern"></div>
+        </div>
         <div class="container">
             <div class="hero-content">
                 <div class="logo-container">
-                    <div class="logo">🏢</div>
+                    <div class="logo-circle">
+                        <div class="logo">🕌</div>
+                    </div>
                 </div>
-                <h1 class="hero-title">ERP CISLAMO</h1>
+                <h1 class="hero-title">
+                    <span class="title-main">ERP CISLAMO</span>
+                    <span class="title-accent">Gestão Inteligente</span>
+                </h1>
                 <p class="hero-subtitle">
-                    Sistema Integrado de Gestão Empresarial para otimizar processos e aumentar a eficiência organizacional
+                    Sistema Integrado de Gestão Empresarial para otimizar processos e aumentar a eficiência organizacional. 
+                    <br>Transforme sua gestão com tecnologia de ponta.
                 </p>
                 <div class="hero-buttons">
-                    <button class="btn btn-primary" ng-click="goToLogin()">Acessar Sistema</button>
-                    <button class="btn btn-secondary">Saiba Mais</button>
+                    <button class="btn btn-primary btn-large" ng-click="goToLogin()">
+                        <span>Acessar Sistema</span>
+                        <span class="btn-icon">→</span>
+                    </button>
+                    <button class="btn btn-secondary btn-large" ng-click="scrollToFeatures()">
+                        <span>Saiba Mais</span>
+                        <span class="btn-icon">↓</span>
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Seguro</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Disponível</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <span class="stat-label">Escalável</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section class="features">
+    <section class="features" id="features">
         <div class="container">
             <div class="section-header">
+                <span class="section-badge">Funcionalidades</span>
                 <h2>Funcionalidades Principais</h2>
                 <p>Tudo que você precisa para gerenciar sua organização em um único lugar</p>
             </div>
             
             <div class="features-grid">
-                <div class="feature-card" ng-repeat="feature in features">
-                    <div class="feature-icon">{{ feature.icon }}</div>
+                <div class="feature-card" ng-repeat="feature in features" ng-class="{'feature-card-' + $index}">
+                    <div class="feature-icon-wrapper">
+                        <div class="feature-icon">{{ feature.icon }}</div>
+                    </div>
                     <h3>{{ feature.title }}</h3>
                     <p>{{ feature.description }}</p>
+                    <div class="feature-arrow">→</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits">
+        <div class="container">
+            <div class="benefits-content">
+                <div class="benefits-text">
+                    <span class="section-badge">Vantagens</span>
+                    <h2>Por que escolher o ERP CISLAMO?</h2>
+                    <div class="benefits-list">
+                        <div class="benefit-item">
+                            <div class="benefit-icon">✓</div>
+                            <div class="benefit-content">
+                                <h4>Gestão Completa</h4>
+                                <p>Centralize todas as operações da sua organização em uma única plataforma</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <div class="benefit-icon">✓</div>
+                            <div class="benefit-content">
+                                <h4>Interface Moderna</h4>
+                                <p>Design intuitivo e fácil de usar, criado para maximizar a produtividade</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <div class="benefit-icon">✓</div>
+                            <div class="benefit-content">
+                                <h4>Segurança Avançada</h4>
+                                <p>Proteja seus dados com as melhores práticas de segurança e privacidade</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <div class="benefit-icon">✓</div>
+                            <div class="benefit-content">
+                                <h4>Relatórios Detalhados</h4>
+                                <p>Obtenha insights valiosos com relatórios e análises em tempo real</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="benefits-visual">
+                    <div class="visual-card">
+                        <div class="visual-icon">📊</div>
+                        <div class="visual-stats">
+                            <div class="visual-stat">+300%</div>
+                            <div class="visual-label">Eficiência</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -40,9 +124,18 @@
     <section class="cta">
         <div class="container">
             <div class="cta-content">
-                <h2>Pronto para começar?</h2>
-                <p>Entre no sistema e descubra como o ERP CISLAMO pode transformar sua gestão</p>
-                <button class="btn btn-primary" ng-click="goToLogin()">Fazer Login</button>
+                <div class="cta-icon">🚀</div>
+                <h2>Pronto para transformar sua gestão?</h2>
+                <p>Entre no sistema e descubra como o ERP CISLAMO pode revolucionar a forma como você gerencia sua organização</p>
+                <button class="btn btn-primary btn-large" ng-click="goToLogin()">
+                    <span>Começar Agora</span>
+                    <span class="btn-icon">→</span>
+                </button>
+                <div class="cta-features">
+                    <span class="cta-feature">✓ Sem compromisso</span>
+                    <span class="cta-feature">✓ Configuração rápida</span>
+                    <span class="cta-feature">✓ Suporte dedicado</span>
+                </div>
             </div>
         </div>
     </section>

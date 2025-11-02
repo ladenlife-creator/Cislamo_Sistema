@@ -32,9 +32,12 @@ class DashboardController extends Controller
             ->get()
             ->map(function($doc) {
                 return [
+                    'id' => $doc->id,
                     'title' => $doc->title,
                     'description' => $doc->description ?? 'Sem descrição',
-                    'created_at' => $doc->created_at
+                    'created_at' => $doc->created_at,
+                    'file_path' => $doc->file_path ?? null,
+                    'file_type' => $doc->file_type ?? null
                 ];
             });
         
@@ -46,6 +49,7 @@ class DashboardController extends Controller
             ->get()
             ->map(function($event) {
                 return [
+                    'id' => $event->id,
                     'title' => $event->title,
                     'start_date' => $event->start_date,
                     'description' => $event->description ?? 'Sem descrição'
