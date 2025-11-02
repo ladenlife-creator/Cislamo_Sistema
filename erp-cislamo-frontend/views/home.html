@@ -1,0 +1,50 @@
+<div class="landing-page">
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="logo-container">
+                    <div class="logo">🏢</div>
+                </div>
+                <h1 class="hero-title">ERP CISLAMO</h1>
+                <p class="hero-subtitle">
+                    Sistema Integrado de Gestão Empresarial para otimizar processos e aumentar a eficiência organizacional
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" ng-click="goToLogin()">Acessar Sistema</button>
+                    <button class="btn btn-secondary">Saiba Mais</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Funcionalidades Principais</h2>
+                <p>Tudo que você precisa para gerenciar sua organização em um único lugar</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card" ng-repeat="feature in features">
+                    <div class="feature-icon">{{ feature.icon }}</div>
+                    <h3>{{ feature.title }}</h3>
+                    <p>{{ feature.description }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Pronto para começar?</h2>
+                <p>Entre no sistema e descubra como o ERP CISLAMO pode transformar sua gestão</p>
+                <button class="btn btn-primary" ng-click="goToLogin()">Fazer Login</button>
+            </div>
+        </div>
+    </section>
+</div>
+

@@ -1,0 +1,110 @@
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🏢</div>
+            <h1 class="brand-name">ERP CISLAMO</h1>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a ng-click="goTo('/dashboard')" class="nav-item" ng-class="{'active': $location.path() === '/dashboard'}">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a ng-click="goTo('/users')" class="nav-item" ng-class="{'active': $location.path() === '/users'}">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Utilizadores</span>
+            </a>
+            <a ng-click="goTo('/documents')" class="nav-item" ng-class="{'active': $location.path() === '/documents'}">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Documentos</span>
+            </a>
+            <a ng-click="goTo('/events')" class="nav-item" ng-class="{'active': $location.path() === '/events'}">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Eventos</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ user.name ? user.name.charAt(0).toUpperCase() : 'U' }}</div>
+                <div class="user-details">
+                    <div class="user-name">{{ user.name || 'Usuário' }}</div>
+                    <div class="user-email">{{ user.identifier || user.email || '' }}</div>
+                </div>
+            </div>
+            <button class="btn-logout" ng-click="logout()">
+                <span>Sair</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-content">
+        <div class="container">
+            <h1>Dashboard</h1>
+            
+            <div class="stats-grid" ng-if="!loading">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <h3>{{ stats.users_count || 0 }}</h3>
+                        <p>Utilizadores</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-info">
+                        <h3>{{ stats.documents_count || 0 }}</h3>
+                        <p>Documentos</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-info">
+                        <h3>{{ stats.events_count || 0 }}</h3>
+                        <p>Eventos</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-sections">
+                <div class="section">
+                    <h2>Documentos Recentes</h2>
+                    <div class="list" ng-if="stats.recent_documents && stats.recent_documents.length > 0">
+                        <div class="list-item" ng-repeat="doc in stats.recent_documents">
+                            <div class="list-icon">📄</div>
+                            <div class="list-content">
+                                <h4>{{ doc.title }}</h4>
+                                <p>{{ doc.description || 'Sem descrição' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p ng-if="!stats.recent_documents || stats.recent_documents.length === 0">
+                        Nenhum documento encontrado.
+                    </p>
+                </div>
+
+                <div class="section">
+                    <h2>Próximos Eventos</h2>
+                    <div class="list" ng-if="stats.upcoming_events && stats.upcoming_events.length > 0">
+                        <div class="list-item" ng-repeat="event in stats.upcoming_events">
+                            <div class="list-icon">📅</div>
+                            <div class="list-content">
+                                <h4>{{ event.title }}</h4>
+                                <p>{{ event.start_date | date:'dd/MM/yyyy HH:mm' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p ng-if="!stats.upcoming_events || stats.upcoming_events.length === 0">
+                        Nenhum evento próximo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+

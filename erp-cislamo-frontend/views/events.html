@@ -1,0 +1,129 @@
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🏢</div>
+            <h1 class="brand-name">ERP CISLAMO</h1>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a ng-click="goTo('/dashboard')" class="nav-item" ng-class="{'active': $location.path() === '/dashboard'}">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a ng-click="goTo('/users')" class="nav-item" ng-class="{'active': $location.path() === '/users'}">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Utilizadores</span>
+            </a>
+            <a ng-click="goTo('/documents')" class="nav-item" ng-class="{'active': $location.path() === '/documents'}">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Documentos</span>
+            </a>
+            <a ng-click="goTo('/events')" class="nav-item" ng-class="{'active': $location.path() === '/events'}">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Eventos</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ (currentUser && currentUser.name) ? currentUser.name.charAt(0).toUpperCase() : 'U' }}</div>
+                <div class="user-details">
+                    <div class="user-name">{{ (currentUser && currentUser.name) || 'Usuário' }}</div>
+                    <div class="user-email">{{ (currentUser && (currentUser.identifier || currentUser.email)) || '' }}</div>
+                </div>
+            </div>
+            <button class="btn-logout" ng-click="logout()">
+                <span>Sair</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Gestão de Eventos</h1>
+                <button class="btn btn-primary" ng-click="toggleForm()">
+                    {{ showForm ? 'Cancelar' : '+ Novo Evento' }}
+                </button>
+            </div>
+
+            <div class="form-card" ng-if="showForm">
+                <h3>Novo Evento</h3>
+                <form ng-submit="createEvent()">
+                    <div class="form-group">
+                        <label>Título</label>
+                        <input type="text" ng-model="newEvent.title" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <textarea ng-model="newEvent.description" class="form-control"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Data de Início</label>
+                            <input type="datetime-local" ng-model="newEvent.start_date" required class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Fim</label>
+                            <input type="datetime-local" ng-model="newEvent.end_date" required class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Localização</label>
+                        <input type="text" ng-model="newEvent.location" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select ng-model="newEvent.status" class="form-control">
+                            <option value="scheduled">Agendado</option>
+                            <option value="ongoing">Em andamento</option>
+                            <option value="completed">Concluído</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Criar Evento</button>
+                </form>
+            </div>
+
+            <div class="events-grid" ng-if="!loading">
+                <div class="event-card" ng-repeat="event in events">
+                    <div class="event-header">
+                        <h3>{{ event.title }}</h3>
+                        <span class="event-status status-{{ event.status }}">{{ event.status }}</span>
+                    </div>
+                    <p>{{ event.description || 'Sem descrição' }}</p>
+                    <div class="event-details">
+                        <div class="event-detail">
+                            <strong>Início:</strong> {{ event.start_date | date:'dd/MM/yyyy HH:mm' }}
+                        </div>
+                        <div class="event-detail">
+                            <strong>Fim:</strong> {{ event.end_date | date:'dd/MM/yyyy HH:mm' }}
+                        </div>
+                        <div class="event-detail" ng-if="event.location">
+                            <strong>Local:</strong> {{ event.location }}
+                        </div>
+                        <div class="event-detail">
+                            <strong>Criado por:</strong> {{ event.user.name }}
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <button class="btn btn-sm btn-danger" ng-click="deleteEvent(event.id)">
+                            Remover
+                        </button>
+                    </div>
+                </div>
+                <p ng-if="events.length === 0" class="empty-message">
+                    Nenhum evento encontrado.
+                </p>
+            </div>
+
+            <div class="loading" ng-if="loading">
+                Carregando...
+            </div>
+        </div>
+    </main>
+</div>
+

@@ -1,0 +1,17 @@
+{
+  "name": "erp-cislamo-frontend",
+  "version": "1.0.0",
+  "description": "ERP CISLAMO - Frontend AngularJS",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server -p 4200 -o"
+  },
+  "dependencies": {
+    "angular": "^1.8.3",
+    "angular-route": "^1.8.3"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
+

@@ -1,0 +1,36 @@
+# Laravel
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*
+backend/.env
+backend/.env.backup
+backend/.phpunit.result.cache
+backend/vendor/
+backend/node_modules/
+
+# Frontend
+erp-cislamo-frontend/node_modules/
+erp-cislamo-frontend/dist/
+erp-cislamo-frontend/.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.sqlite
+*.sqlite3
+backend/database/database.sqlite
+
+# Logs
+*.log
+

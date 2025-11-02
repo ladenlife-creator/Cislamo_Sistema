@@ -1,0 +1,108 @@
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">🏢</div>
+            <h1 class="brand-name">ERP CISLAMO</h1>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a ng-click="goTo('/dashboard')" class="nav-item" ng-class="{'active': $location.path() === '/dashboard'}">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a ng-click="goTo('/users')" class="nav-item" ng-class="{'active': $location.path() === '/users'}">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">Utilizadores</span>
+            </a>
+            <a ng-click="goTo('/documents')" class="nav-item" ng-class="{'active': $location.path() === '/documents'}">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">Documentos</span>
+            </a>
+            <a ng-click="goTo('/events')" class="nav-item" ng-class="{'active': $location.path() === '/events'}">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Eventos</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ (currentUser && currentUser.name) ? currentUser.name.charAt(0).toUpperCase() : 'U' }}</div>
+                <div class="user-details">
+                    <div class="user-name">{{ (currentUser && currentUser.name) || 'Usuário' }}</div>
+                    <div class="user-email">{{ (currentUser && (currentUser.identifier || currentUser.email)) || '' }}</div>
+                </div>
+            </div>
+            <button class="btn-logout" ng-click="logout()">
+                <span>Sair</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>Gestão de Utilizadores</h1>
+                <button class="btn btn-primary" ng-click="toggleForm()">
+                    {{ showForm ? 'Cancelar' : '+ Novo Utilizador' }}
+                </button>
+            </div>
+
+            <div class="form-card" ng-if="showForm">
+                <h3>Novo Utilizador</h3>
+                <form ng-submit="createUser()">
+                    <div class="form-group">
+                        <label>Nome</label>
+                        <input type="text" ng-model="newUser.name" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" ng-model="newUser.email" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <input type="password" ng-model="newUser.password" required class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Criar Utilizador</button>
+                </form>
+            </div>
+
+            <div class="data-table" ng-if="!loading">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Data de Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="user in users">
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.created_at | date:'dd/MM/yyyy' }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" ng-click="deleteUser(user.id)">
+                                    Remover
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p ng-if="users.length === 0" class="empty-message">
+                    Nenhum utilizador encontrado.
+                </p>
+            </div>
+
+            <div class="loading" ng-if="loading">
+                Carregando...
+            </div>
+        </div>
+    </main>
+</div>
+
