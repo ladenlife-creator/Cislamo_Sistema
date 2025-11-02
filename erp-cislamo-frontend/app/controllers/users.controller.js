@@ -66,12 +66,6 @@ angular.module('erpCislamoApp')
             };
         };
         
-        $scope.logout = function() {
-            AuthService.logout().finally(function() {
-                $location.path('/login');
-            });
-        };
-        
         $scope.goTo = function(path) {
             $location.path(path);
         };

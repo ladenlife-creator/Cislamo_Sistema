@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\V1\Transport\StudentTransportEvent;
+use App\Models\V1\SIS\Student\StudentDocument;
 
 class DashboardController extends Controller
 {
@@ -15,17 +17,47 @@ class DashboardController extends Controller
     {
         $user = auth('api')->user();
         
-        // Get users count (scoped to tenant if applicable)
+        // Get users count
         $usersCount = User::count();
         
-        // For now, return simple counts
-        // You can enhance this later to include tenant/scoped queries
+        // Get documents count
+        $documentsCount = StudentDocument::count();
+        
+        // Get events count
+        $eventsCount = StudentTransportEvent::count();
+        
+        // Get recent documents (last 5)
+        $recentDocuments = StudentDocument::with(['student:id,first_name,last_name'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($doc) {
+                return [
+                    'title' => $doc->document_name,
+                    'description' => $doc->verification_notes ?? 'Sem descrição',
+                    'created_at' => $doc->created_at
+                ];
+            });
+        
+        // Get upcoming events (next 5)
+        $upcomingEvents = StudentTransportEvent::where('event_timestamp', '>=', now())
+            ->orderBy('event_timestamp', 'asc')
+            ->limit(5)
+            ->get()
+            ->map(function($event) {
+                return [
+                    'title' => ucfirst(str_replace('_', ' ', $event->event_type ?? 'Evento de Transporte')),
+                    'start_date' => $event->event_timestamp,
+                    'description' => $event->notes ?? 'Evento de transporte escolar'
+                ];
+            });
+        
         $stats = [
             'users_count' => $usersCount,
-            'documents_count' => 0, // TODO: Implement when documents model exists
-            'events_count' => 0, // TODO: Implement when events model exists
-            'recent_documents' => [],
-            'upcoming_events' => [],
+            'documents_count' => $documentsCount,
+            'events_count' => $eventsCount,
+            'recent_documents' => $recentDocuments,
+            'upcoming_events' => $upcomingEvents,
         ];
         
         return response()->json($stats);

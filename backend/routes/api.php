@@ -56,6 +56,91 @@ Route::middleware('auth:api')->group(function () {
     
     // Dashboard routes
     Route::get('/dashboard/stats', [\App\Http\Controllers\API\DashboardController::class, 'stats']);
+    
+    // Frontend compatibility routes (without v1 prefix)
+    Route::get('/users', function(\Illuminate\Http\Request $request) {
+        try {
+            $users = \App\Models\User::select('id', 'name', 'identifier', 'email', 'created_at')
+                ->orderBy('name')
+                ->limit(100)
+                ->get()
+                ->map(function($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email ?? $user->identifier,
+                        'identifier' => $user->identifier,
+                        'created_at' => $user->created_at
+                    ];
+                });
+            
+            return response()->json($users->toArray());
+        } catch (\Exception $e) {
+            return response()->json(['data' => [], 'message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::get('/events', function(\Illuminate\Http\Request $request) {
+        try {
+            $events = \App\Models\V1\Transport\StudentTransportEvent::withoutGlobalScopes()
+                ->with([
+                    'student:id,first_name,last_name',
+                    'fleetBus:id,license_plate',
+                    'busStop:id,name'
+                ])
+                ->orderBy('event_timestamp', 'desc')
+                ->limit(100)
+                ->get()
+                ->map(function($event) {
+                    return [
+                        'id' => $event->id,
+                        'title' => ucfirst(str_replace('_', ' ', $event->event_type ?? 'Evento de Transporte')),
+                        'description' => $event->notes ?? 'Evento de transporte escolar',
+                        'start_date' => $event->event_timestamp ? $event->event_timestamp->toIso8601String() : null,
+                        'end_date' => $event->event_timestamp ? $event->event_timestamp->toIso8601String() : null,
+                        'status' => 'scheduled',
+                        'location' => $event->busStop ? $event->busStop->name : null,
+                        'user' => [
+                            'name' => $event->student ? ($event->student->first_name . ' ' . $event->student->last_name) : 'Sistema'
+                        ]
+                    ];
+                });
+            
+            return response()->json($events->toArray());
+        } catch (\Exception $e) {
+            \Log::error('Events endpoint error: ' . $e->getMessage());
+            return response()->json(['data' => [], 'message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::get('/documents', function(\Illuminate\Http\Request $request) {
+        try {
+            $documents = \App\Models\V1\SIS\Student\StudentDocument::withoutGlobalScopes()
+                ->with([
+                    'student:id,first_name,last_name',
+                    'uploader:id,name'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->limit(100)
+                ->get()
+                ->map(function($doc) {
+                    return [
+                        'id' => $doc->id,
+                        'title' => $doc->document_name,
+                        'description' => $doc->verification_notes ?? 'Sem descrição',
+                        'category' => $doc->document_type ?? 'Outro',
+                        'user' => [
+                            'name' => $doc->uploader ? $doc->uploader->name : ($doc->student ? ($doc->student->first_name . ' ' . $doc->student->last_name) : 'Sistema')
+                        ]
+                    ];
+                });
+            
+            return response()->json($documents->toArray());
+        } catch (\Exception $e) {
+            \Log::error('Documents endpoint error: ' . $e->getMessage());
+            return response()->json(['data' => [], 'message' => $e->getMessage()], 500);
+        }
+    });
 });
 
 //v1 group
