@@ -4,6 +4,7 @@
 use App\Models\Settings\Tenant;
 use App\Http\Controllers\API\V1\School\SchoolController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 // Endpoint público temporário para teste (remover em produção)
 Route::get('/schools/public', [SchoolController::class, 'publicIndex']);
@@ -80,28 +81,37 @@ Route::middleware('auth:api')->group(function () {
         }
     });
     
+    // Events routes
     Route::get('/events', function(\Illuminate\Http\Request $request) {
         try {
-            $events = \App\Models\V1\Transport\StudentTransportEvent::withoutGlobalScopes()
-                ->with([
-                    'student:id,first_name,last_name',
-                    'fleetBus:id,license_plate',
-                    'busStop:id,name'
-                ])
-                ->orderBy('event_timestamp', 'desc')
+            // Buscar eventos da tabela genérica 'events'
+            $events = DB::table('events')
+                ->leftJoin('users', 'events.user_id', '=', 'users.id')
+                ->select(
+                    'events.id',
+                    'events.title',
+                    'events.description',
+                    'events.start_date',
+                    'events.end_date',
+                    'events.location',
+                    'events.status',
+                    'events.created_at',
+                    'users.name as user_name'
+                )
+                ->orderBy('events.start_date', 'desc')
                 ->limit(100)
                 ->get()
                 ->map(function($event) {
                     return [
                         'id' => $event->id,
-                        'title' => ucfirst(str_replace('_', ' ', $event->event_type ?? 'Evento de Transporte')),
-                        'description' => $event->notes ?? 'Evento de transporte escolar',
-                        'start_date' => $event->event_timestamp ? $event->event_timestamp->toIso8601String() : null,
-                        'end_date' => $event->event_timestamp ? $event->event_timestamp->toIso8601String() : null,
-                        'status' => 'scheduled',
-                        'location' => $event->busStop ? $event->busStop->name : null,
+                        'title' => $event->title,
+                        'description' => $event->description ?? 'Sem descrição',
+                        'start_date' => $event->start_date ? \Carbon\Carbon::parse($event->start_date)->toIso8601String() : null,
+                        'end_date' => $event->end_date ? \Carbon\Carbon::parse($event->end_date)->toIso8601String() : null,
+                        'status' => $event->status ?? 'scheduled',
+                        'location' => $event->location ?? null,
                         'user' => [
-                            'name' => $event->student ? ($event->student->first_name . ' ' . $event->student->last_name) : 'Sistema'
+                            'name' => $event->user_name ?? 'Sistema'
                         ]
                     ];
                 });
@@ -113,24 +123,159 @@ Route::middleware('auth:api')->group(function () {
         }
     });
     
+    Route::post('/events', function(\Illuminate\Http\Request $request) {
+        try {
+            $user = $request->user();
+            
+            // Criar evento na tabela events
+            $eventId = DB::table('events')->insertGetId([
+                'title' => $request->input('title', 'Novo Evento'),
+                'description' => $request->input('description', ''),
+                'start_date' => $request->input('start_date') ? \Carbon\Carbon::parse($request->input('start_date'))->format('Y-m-d H:i:s') : now(),
+                'end_date' => $request->input('end_date') ? \Carbon\Carbon::parse($request->input('end_date'))->format('Y-m-d H:i:s') : now(),
+                'status' => $request->input('status', 'scheduled'),
+                'location' => $request->input('location', ''),
+                'user_id' => $user->id ?? null,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            $event = DB::table('events')
+                ->leftJoin('users', 'events.user_id', '=', 'users.id')
+                ->where('events.id', $eventId)
+                ->select(
+                    'events.id',
+                    'events.title',
+                    'events.description',
+                    'events.start_date',
+                    'events.end_date',
+                    'events.location',
+                    'events.status',
+                    'events.created_at',
+                    'users.name as user_name'
+                )
+                ->first();
+            
+            $response = [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description ?? 'Sem descrição',
+                'start_date' => $event->start_date ? \Carbon\Carbon::parse($event->start_date)->toIso8601String() : null,
+                'end_date' => $event->end_date ? \Carbon\Carbon::parse($event->end_date)->toIso8601String() : null,
+                'status' => $event->status ?? 'scheduled',
+                'location' => $event->location ?? null,
+                'user' => [
+                    'name' => $event->user_name ?? 'Sistema'
+                ]
+            ];
+            
+            return response()->json($response, 201);
+        } catch (\Exception $e) {
+            \Log::error('Events create error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::put('/events/{id}', function(\Illuminate\Http\Request $request, $id) {
+        try {
+            DB::table('events')
+                ->where('id', $id)
+                ->update([
+                    'title' => $request->input('title'),
+                    'description' => $request->input('description'),
+                    'start_date' => $request->input('start_date') ? \Carbon\Carbon::parse($request->input('start_date'))->format('Y-m-d H:i:s') : null,
+                    'end_date' => $request->input('end_date') ? \Carbon\Carbon::parse($request->input('end_date'))->format('Y-m-d H:i:s') : null,
+                    'status' => $request->input('status'),
+                    'location' => $request->input('location'),
+                    'updated_at' => now()
+                ]);
+            
+            $event = DB::table('events')
+                ->leftJoin('users', 'events.user_id', '=', 'users.id')
+                ->where('events.id', $id)
+                ->select(
+                    'events.id',
+                    'events.title',
+                    'events.description',
+                    'events.start_date',
+                    'events.end_date',
+                    'events.location',
+                    'events.status',
+                    'events.created_at',
+                    'users.name as user_name'
+                )
+                ->first();
+            
+            if (!$event) {
+                return response()->json(['message' => 'Evento não encontrado'], 404);
+            }
+            
+            $response = [
+                'id' => $event->id,
+                'title' => $event->title,
+                'description' => $event->description ?? 'Sem descrição',
+                'start_date' => $event->start_date ? \Carbon\Carbon::parse($event->start_date)->toIso8601String() : null,
+                'end_date' => $event->end_date ? \Carbon\Carbon::parse($event->end_date)->toIso8601String() : null,
+                'status' => $event->status ?? 'scheduled',
+                'location' => $event->location ?? null,
+                'user' => [
+                    'name' => $event->user_name ?? 'Sistema'
+                ]
+            ];
+            
+            return response()->json($response);
+        } catch (\Exception $e) {
+            \Log::error('Events update error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::delete('/events/{id}', function(\Illuminate\Http\Request $request, $id) {
+        try {
+            $deleted = DB::table('events')->where('id', $id)->delete();
+            
+            if ($deleted) {
+                return response()->json(['message' => 'Evento removido com sucesso'], 200);
+            } else {
+                return response()->json(['message' => 'Evento não encontrado'], 404);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Events delete error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    });
+    
+    // Documents routes
     Route::get('/documents', function(\Illuminate\Http\Request $request) {
         try {
-            $documents = \App\Models\V1\SIS\Student\StudentDocument::withoutGlobalScopes()
-                ->with([
-                    'student:id,first_name,last_name',
-                    'uploader:id,name'
-                ])
-                ->orderBy('created_at', 'desc')
+            // Buscar documentos da tabela genérica 'documents'
+            $documents = DB::table('documents')
+                ->leftJoin('users', 'documents.user_id', '=', 'users.id')
+                ->select(
+                    'documents.id',
+                    'documents.title',
+                    'documents.description',
+                    'documents.category',
+                    'documents.file_path',
+                    'documents.file_type',
+                    'documents.file_size',
+                    'documents.created_at',
+                    'users.name as user_name'
+                )
+                ->orderBy('documents.created_at', 'desc')
                 ->limit(100)
                 ->get()
                 ->map(function($doc) {
                     return [
                         'id' => $doc->id,
-                        'title' => $doc->document_name,
-                        'description' => $doc->verification_notes ?? 'Sem descrição',
-                        'category' => $doc->document_type ?? 'Outro',
+                        'title' => $doc->title,
+                        'description' => $doc->description ?? 'Sem descrição',
+                        'category' => $doc->category ?? 'Outro',
+                        'file_path' => $doc->file_path ?? null,
+                        'file_type' => $doc->file_type ?? null,
+                        'file_size' => $doc->file_size ?? null,
                         'user' => [
-                            'name' => $doc->uploader ? $doc->uploader->name : ($doc->student ? ($doc->student->first_name . ' ' . $doc->student->last_name) : 'Sistema')
+                            'name' => $doc->user_name ?? 'Sistema'
                         ]
                     ];
                 });
@@ -139,6 +284,128 @@ Route::middleware('auth:api')->group(function () {
         } catch (\Exception $e) {
             \Log::error('Documents endpoint error: ' . $e->getMessage());
             return response()->json(['data' => [], 'message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::post('/documents', function(\Illuminate\Http\Request $request) {
+        try {
+            $user = $request->user();
+            
+            // Criar documento na tabela documents
+            $documentId = DB::table('documents')->insertGetId([
+                'title' => $request->input('title', 'Novo Documento'),
+                'description' => $request->input('description', ''),
+                'category' => $request->input('category', 'Outro'),
+                'file_path' => $request->input('file_path', null),
+                'file_type' => $request->input('file_type', null),
+                'file_size' => $request->input('file_size', null),
+                'user_id' => $user->id ?? null,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            $document = DB::table('documents')
+                ->leftJoin('users', 'documents.user_id', '=', 'users.id')
+                ->where('documents.id', $documentId)
+                ->select(
+                    'documents.id',
+                    'documents.title',
+                    'documents.description',
+                    'documents.category',
+                    'documents.file_path',
+                    'documents.file_type',
+                    'documents.file_size',
+                    'documents.created_at',
+                    'users.name as user_name'
+                )
+                ->first();
+            
+            $response = [
+                'id' => $document->id,
+                'title' => $document->title,
+                'description' => $document->description ?? 'Sem descrição',
+                'category' => $document->category ?? 'Outro',
+                'file_path' => $document->file_path ?? null,
+                'file_type' => $document->file_type ?? null,
+                'file_size' => $document->file_size ?? null,
+                'user' => [
+                    'name' => $document->user_name ?? 'Sistema'
+                ]
+            ];
+            
+            return response()->json($response, 201);
+        } catch (\Exception $e) {
+            \Log::error('Documents create error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::put('/documents/{id}', function(\Illuminate\Http\Request $request, $id) {
+        try {
+            DB::table('documents')
+                ->where('id', $id)
+                ->update([
+                    'title' => $request->input('title'),
+                    'description' => $request->input('description'),
+                    'category' => $request->input('category'),
+                    'file_path' => $request->input('file_path'),
+                    'file_type' => $request->input('file_type'),
+                    'file_size' => $request->input('file_size'),
+                    'updated_at' => now()
+                ]);
+            
+            $document = DB::table('documents')
+                ->leftJoin('users', 'documents.user_id', '=', 'users.id')
+                ->where('documents.id', $id)
+                ->select(
+                    'documents.id',
+                    'documents.title',
+                    'documents.description',
+                    'documents.category',
+                    'documents.file_path',
+                    'documents.file_type',
+                    'documents.file_size',
+                    'documents.created_at',
+                    'users.name as user_name'
+                )
+                ->first();
+            
+            if (!$document) {
+                return response()->json(['message' => 'Documento não encontrado'], 404);
+            }
+            
+            $response = [
+                'id' => $document->id,
+                'title' => $document->title,
+                'description' => $document->description ?? 'Sem descrição',
+                'category' => $document->category ?? 'Outro',
+                'file_path' => $document->file_path ?? null,
+                'file_type' => $document->file_type ?? null,
+                'file_size' => $document->file_size ?? null,
+                'user' => [
+                    'name' => $document->user_name ?? 'Sistema'
+                ]
+            ];
+            
+            return response()->json($response);
+        } catch (\Exception $e) {
+            \Log::error('Documents update error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    });
+    
+    Route::delete('/documents/{id}', function(\Illuminate\Http\Request $request, $id) {
+        try {
+            $deleted = DB::table('documents')->where('id', $id)->delete();
+            
+            if ($deleted) {
+                return response()->json(['message' => 'Documento removido com sucesso'], 200);
+            } else {
+                return response()->json(['message' => 'Documento não encontrado'], 404);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Documents delete error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     });
 });

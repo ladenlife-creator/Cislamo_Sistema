@@ -12,12 +12,15 @@ angular.module('erpCislamoApp')
         };
         
         $scope.loadUsers = function() {
+            $scope.loading = true;
             UserService.getAll()
                 .then(function(response) {
-                    $scope.users = response.data;
+                    // Garantir que sempre seja um array
+                    $scope.users = Array.isArray(response.data) ? response.data : [];
                 })
                 .catch(function(error) {
                     console.error('Erro ao carregar utilizadores:', error);
+                    $scope.users = [];
                 })
                 .finally(function() {
                     $scope.loading = false;

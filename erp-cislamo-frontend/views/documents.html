@@ -58,14 +58,15 @@
             </div>
 
             <div class="documents-grid" ng-if="!loading">
-                <div class="document-card" ng-repeat="doc in documents">
+                <div class="document-card" ng-repeat="doc in documents track by doc.id">
                     <div class="document-icon">📄</div>
                     <div class="document-info">
-                        <h3>{{ doc.title }}</h3>
+                        <h3>{{ doc.title || 'Sem título' }}</h3>
                         <p>{{ doc.description || 'Sem descrição' }}</p>
                         <div class="document-meta">
                             <span>Categoria: {{ doc.category || 'N/A' }}</span>
-                            <span>Por: {{ doc.user.name }}</span>
+                            <span ng-if="doc.user && doc.user.name">Por: {{ doc.user.name }}</span>
+                            <span ng-if="!doc.user || !doc.user.name">Por: Sistema</span>
                         </div>
                     </div>
                     <div class="document-actions">
@@ -74,7 +75,7 @@
                         </button>
                     </div>
                 </div>
-                <p ng-if="documents.length === 0" class="empty-message">
+                <p ng-if="!loading && documents.length === 0" class="empty-message">
                     Nenhum documento encontrado.
                 </p>
             </div>

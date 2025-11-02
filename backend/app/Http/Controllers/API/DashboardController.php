@@ -5,8 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\V1\Transport\StudentTransportEvent;
-use App\Models\V1\SIS\Student\StudentDocument;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -20,35 +19,36 @@ class DashboardController extends Controller
         // Get users count
         $usersCount = User::count();
         
-        // Get documents count
-        $documentsCount = StudentDocument::count();
+        // Get documents count from generic 'documents' table
+        $documentsCount = DB::table('documents')->count();
         
-        // Get events count
-        $eventsCount = StudentTransportEvent::count();
+        // Get events count from generic 'events' table
+        $eventsCount = DB::table('events')->count();
         
-        // Get recent documents (last 5)
-        $recentDocuments = StudentDocument::with(['student:id,first_name,last_name'])
+        // Get recent documents (last 5) from generic 'documents' table
+        $recentDocuments = DB::table('documents')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
             ->map(function($doc) {
                 return [
-                    'title' => $doc->document_name,
-                    'description' => $doc->verification_notes ?? 'Sem descrição',
+                    'title' => $doc->title,
+                    'description' => $doc->description ?? 'Sem descrição',
                     'created_at' => $doc->created_at
                 ];
             });
         
-        // Get upcoming events (next 5)
-        $upcomingEvents = StudentTransportEvent::where('event_timestamp', '>=', now())
-            ->orderBy('event_timestamp', 'asc')
+        // Get upcoming events (next 5) from generic 'events' table
+        $upcomingEvents = DB::table('events')
+            ->where('start_date', '>=', now())
+            ->orderBy('start_date', 'asc')
             ->limit(5)
             ->get()
             ->map(function($event) {
                 return [
-                    'title' => ucfirst(str_replace('_', ' ', $event->event_type ?? 'Evento de Transporte')),
-                    'start_date' => $event->event_timestamp,
-                    'description' => $event->notes ?? 'Evento de transporte escolar'
+                    'title' => $event->title,
+                    'start_date' => $event->start_date,
+                    'description' => $event->description ?? 'Sem descrição'
                 ];
             });
         
