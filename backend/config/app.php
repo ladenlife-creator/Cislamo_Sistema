@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'IEDU_API'),
+    'name' => env('APP_NAME', 'ERP_CISLAMO_API'),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://iedu.nakasha.store/'),
+    'url' => env('APP_URL', 'https://erp.cislamo.com/'),
 
     /*
     |--------------------------------------------------------------------------

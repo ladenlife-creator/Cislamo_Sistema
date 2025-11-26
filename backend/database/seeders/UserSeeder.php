@@ -16,16 +16,40 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'name' => 'Admin User',
-                'identifier' => 'admin@admin.com',
+                'identifier' => 'admin@erpcislamo.com',
                 'type' => 'email',
+                'user_type' => 'admin',
                 'password' => Hash::make('123456789'),
                 'verified_at' => now(),
-                'role_id' => 1,
+                'role_id' => null,
                 'is_active' => true,
-                'profile_photo_path' => 'https://source.unsplash.com/128x128/?face,portrait,person&sig=1',
+                'phone' => '+1234567890',
                 'settings' => json_encode(['theme' => 'dark', 'notifications' => true])
             ],
-
+            [
+                'name' => 'João Silva',
+                'identifier' => 'joao.silva@erpcislamo.com',
+                'type' => 'email',
+                'user_type' => 'staff',
+                'password' => Hash::make('123456789'),
+                'verified_at' => now(),
+                'role_id' => null,
+                'is_active' => true,
+                'phone' => '+1234567891',
+                'settings' => json_encode(['theme' => 'light', 'notifications' => true])
+            ],
+            [
+                'name' => 'Maria Santos',
+                'identifier' => 'maria.santos@erpcislamo.com',
+                'type' => 'email',
+                'user_type' => 'staff',
+                'password' => Hash::make('123456789'),
+                'verified_at' => now(),
+                'role_id' => null,
+                'is_active' => true,
+                'phone' => '+1234567892',
+                'settings' => json_encode(['theme' => 'light', 'notifications' => false])
+            ],
         ];
 
         foreach ($users as $userData) {

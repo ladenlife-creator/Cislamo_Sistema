@@ -39,7 +39,7 @@ class UserController extends Controller
         ->when($request->get('search'), function ($query, $search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('identifier', 'like', "%{$search}%");
             });
         })
         ->when($request->get('status'), function ($query, $status) {

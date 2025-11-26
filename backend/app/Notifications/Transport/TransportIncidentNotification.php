@@ -69,7 +69,7 @@ class TransportIncidentNotification extends Notification implements ShouldQueue
 
         $message->line('We will keep you updated as the situation develops.')
                 ->line('If you have any immediate concerns, please contact the school office.')
-                ->salutation('iEDU Transport Safety Team');
+                ->salutation('ERP CISLAMO Transport Safety Team');
 
         return $message;
     }

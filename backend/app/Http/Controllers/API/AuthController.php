@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
-use App\Http\Resources\TenantResource;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +24,6 @@ class AuthController extends Controller
         $request->validate([
             'identifier' => 'required',
             'password' => 'required|string',
-            'tenant_id' => 'nullable|integer|exists:tenants,id',
         ]);
 
         $identifier = $request->get('identifier');
@@ -53,23 +51,6 @@ class AuthController extends Controller
         // Autenticar e gerar token JWT Tymon\JWTAuth\Facades\JWTAuth
         $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($user);
 
-        // Handle tenant context
-        if ($request->has('tenant_id')) {
-            $tenantId = $request->get('tenant_id');
-            if (!$user->belongsToTenant($tenantId)) {
-                return response()->json([
-                    'error' => 'You do not have access to the requested organization.'
-                ], 403);
-            }
-            $user->switchTenant($tenantId);
-        } else {
-            // Set to first available tenant
-            $firstTenant = $user->activeTenants()->first();
-            if ($firstTenant) {
-                session(['tenant_id' => $firstTenant->id]);
-            }
-        }
-
         $user->updateLastLogin();
 
         $this->activityLogService->logUserAction('user_logged_in', $user);
@@ -79,8 +60,6 @@ class AuthController extends Controller
             'token_type' => 'bearer',
             'expires_in' => \Tymon\JWTAuth\Facades\JWTAuth::factory()->getTTL() * 60,
             'user' => new UserResource($user),
-            'current_tenant' => $user->getCurrentTenant() ?
-                new TenantResource($user->getCurrentTenant()) : null,
         ]);
     }
 
@@ -135,9 +114,6 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => new UserResource($user),
-            'current_tenant' => $user->getCurrentTenant() ?
-                new TenantResource($user->getCurrentTenant()) : null,
-            'tenant_context' => $user->getTenantContext(),
         ]);
     }
 

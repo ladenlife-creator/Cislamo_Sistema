@@ -55,7 +55,7 @@ class MaintenanceReminderNotification extends Notification implements ShouldQueu
                 ->line("- Capacity: {$this->bus->capacity} students")
                 ->action('Manage Fleet', $this->getFleetManagementUrl())
                 ->line('Please schedule the required maintenance as soon as possible.')
-                ->salutation('iEDU Fleet Management System');
+                ->salutation('ERP CISLAMO Fleet Management System');
 
         return $message;
     }

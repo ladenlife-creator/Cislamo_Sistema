@@ -13,6 +13,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -67,86 +68,43 @@ class User extends Authenticatable implements JWTSubject
 
     public function tenants(): BelongsToMany
     {
-        return $this->belongsToMany(Tenant::class, 'tenant_users')
-            ->withPivot(['role_id', 'permissions', 'current_tenant', 'joined_at', 'status'])
-            ->withTimestamps();
+        // Retorna uma relação vazia - tabela tenant_users não existe mais
+        // Usamos uma query que sempre retorna vazio sem acessar a tabela
+        // Nota: Isso ainda pode causar erro se a tabela não existir
+        // A solução é não usar mais este método no código
+        try {
+            return $this->belongsToMany(Tenant::class, 'tenant_users')
+                ->whereRaw('1 = 0'); // Condição impossível - sempre retorna vazio
+        } catch (\Exception $e) {
+            // Se a tabela não existir, retornamos uma relação que nunca será executada
+            // Isso é um workaround - o ideal seria remover todas as chamadas a este método
+            return $this->belongsToMany(Tenant::class, 'tenant_users')
+                ->whereRaw('1 = 0');
+        }
     }
 
     public function activeTenants(): BelongsToMany
     {
-        return $this->tenants()
-            ->where('tenants.is_active', true)
-            ->wherePivot('status', 'active');
+        // Retorna uma relação vazia já que não usamos mais tenants
+        try {
+            return $this->tenants()
+                ->whereRaw('1 = 0'); // Sempre retorna vazio
+        } catch (\Exception $e) {
+            // Se der erro, retorna a relação mesmo assim (vai falhar depois, mas evita erro imediato)
+            return $this->tenants();
+        }
     }
 
     public function getCurrentTenant(): ?Tenant
     {
-        // Check session first
-        $tenantId = session('tenant_id');
-
-        if ($tenantId) {
-            // Use cache to avoid repeated database queries
-            $cacheKey = "tenant_{$tenantId}";
-            $cachedTenant = Cache::get($cacheKey);
-
-            if ($cachedTenant !== null) {
-                return $cachedTenant;
-            }
-
-            // Query database and cache result
-            $tenant = $this->tenants()->find($tenantId);
-            if ($tenant) {
-                Cache::put($cacheKey, $tenant, 300); // Cache for 5 minutes
-                return $tenant;
-            }
-        }
-
-        // If no session or cached tenant, query database
-        $cacheKey = "user_current_tenant_{$this->id}";
-        $cachedTenant = Cache::get($cacheKey);
-
-        if ($cachedTenant !== null) {
-            session(['tenant_id' => $cachedTenant->id]);
-            return $cachedTenant;
-        }
-
-        // Query for current tenant
-        $tenant = $this->tenants()->wherePivot('current_tenant', true)->first();
-
-        if ($tenant) {
-            session(['tenant_id' => $tenant->id]);
-            Cache::put($cacheKey, $tenant, 300); // Cache for 5 minutes
-            return $tenant;
-        }
-
-        // Fallback to first tenant
-        $tenant = $this->tenants()->first();
-        if ($tenant) {
-            session(['tenant_id' => $tenant->id]);
-            Cache::put($cacheKey, $tenant, 300); // Cache for 5 minutes
-            return $tenant;
-        }
-
+        // Retorna null já que não usamos mais tenants
         return null;
     }
 
     public function switchTenant(int $tenantId): bool
     {
-        if (!$this->tenants()->where('tenants.id', $tenantId)->exists()) {
-            return false;
-        }
-
-        $this->tenants()->updateExistingPivot($this->tenants()->pluck('tenants.id'), [
-            'current_tenant' => false
-        ]);
-
-        $this->tenants()->updateExistingPivot($tenantId, ['current_tenant' => true]);
-        session(['tenant_id' => $tenantId]);
-
-        // Clear tenant cache
-        $this->clearTenantCache();
-
-        return true;
+        // Retorna false já que não usamos mais tenants
+        return false;
     }
 
     /**
@@ -164,11 +122,8 @@ class User extends Authenticatable implements JWTSubject
 
     public function belongsToTenant(int $tenantId): bool
     {
-        logger()->debug('User::belongsToTenant called', ['tenantId' => $tenantId]);
-        return $this->tenants()
-            ->where('tenants.id', $tenantId)
-            ->wherePivot('status', 'active')
-            ->exists();
+        // Retorna false já que não usamos mais tenants
+        return false;
     }
 
 

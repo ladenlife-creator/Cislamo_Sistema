@@ -50,7 +50,7 @@ class BusDelayNotification extends Notification implements ShouldQueue
             ->action('Track Bus Location', $this->getTrackingUrl())
             ->line('You can monitor the bus location in real-time through the parent portal.')
             ->line('Thank you for your patience.')
-            ->salutation('Best regards, iEDU Transport Team');
+            ->salutation('Best regards, ERP CISLAMO Transport Team');
     }
 
     public function toTwilio($notifiable)
@@ -59,7 +59,7 @@ class BusDelayNotification extends Notification implements ShouldQueue
         $newEta = $this->delayData['new_eta'];
         $busInfo = $this->delayData['bus_info'];
 
-        $message = "🚌 Bus Delay Alert: Your child's bus ({$busInfo}) is running {$delayMinutes} min late. New ETA: {$newEta}. Track live: iedu.app/track";
+        $message = "🚌 Bus Delay Alert: Your child's bus ({$busInfo}) is running {$delayMinutes} min late. New ETA: {$newEta}. Track live: " . config('app.url') . '/track';
 
         return TwilioSmsMessage::create()
             ->content($message)

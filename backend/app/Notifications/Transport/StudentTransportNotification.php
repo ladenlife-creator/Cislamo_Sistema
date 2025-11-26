@@ -87,7 +87,7 @@ class StudentTransportNotification extends Notification implements ShouldQueue
                 break;
         }
 
-        $message->line('Thank you for using iEDU Transport Services.')
+        $message->line('Thank you for using ERP CISLAMO Transport Services.')
             ->salutation('Best regards, ' . config('app.name') . ' Transport Team');
 
         return $message;
@@ -194,7 +194,7 @@ class StudentTransportNotification extends Notification implements ShouldQueue
     private function getShortTrackingUrl(): string
     {
         // This would typically be a shortened URL for SMS
-        return 'iedu.app/track';
+        return config('app.url') . '/track';
     }
 
     public function failed(\Throwable $exception)

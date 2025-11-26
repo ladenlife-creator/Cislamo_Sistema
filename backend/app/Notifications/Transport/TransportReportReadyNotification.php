@@ -46,7 +46,7 @@ class TransportReportReadyNotification extends Notification implements ShouldQue
             ->action('Download Report', $downloadUrl)
             ->line('The report will be available for download for the next 7 days.')
             ->line('If you have any questions about the report, please contact our support team.')
-            ->salutation('iEDU Reporting Team');
+            ->salutation('ERP CISLAMO Reporting Team');
     }
 
     public function toDatabase($notifiable)

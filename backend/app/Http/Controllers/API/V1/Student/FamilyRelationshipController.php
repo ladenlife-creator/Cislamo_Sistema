@@ -567,18 +567,27 @@ class FamilyRelationshipController extends Controller
         }
 
         try {
-            $query = User::select('id', 'first_name', 'last_name', 'email', 'phone')
+            $query = User::select('id', 'name', 'identifier', 'type', 'phone')
                 ->where(function($q) use ($request) {
-                    $q->where('first_name', 'like', "%{$request->search}%")
-                      ->orWhere('last_name', 'like', "%{$request->search}%")
-                      ->orWhere('email', 'like', "%{$request->search}%");
+                    $q->where('name', 'like', "%{$request->search}%")
+                      ->orWhere('identifier', 'like', "%{$request->search}%")
+                      ->orWhere('phone', 'like', "%{$request->search}%");
                 });
 
             if ($request->has('exclude_ids')) {
                 $query->whereNotIn('id', $request->exclude_ids);
             }
 
-            $potentialMembers = $query->limit(10)->get();
+            $potentialMembers = $query->limit(10)->get()->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->type === 'email' ? $user->identifier : null,
+                    'phone' => $user->phone ?? ($user->type === 'phone' ? $user->identifier : null),
+                    'identifier' => $user->identifier,
+                    'type' => $user->type
+                ];
+            });
 
             return response()->json([
                 'success' => true,

@@ -13,16 +13,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AllPermissionsSeeder::class,
-            LibraryPermissionsSeeder::class,
-            FinancialPermissionsSeeder::class,
-            PermissionRoleSeeder::class,
             UserSeeder::class,
-            TenantSeeder::class,
-            SchoolSeeder::class,
-            SchoolFormTemplatesSeeder::class,
-            LibrarySeeder::class,
-            FinancialSeeder::class,
+            DocumentSeeder::class,
+            EventSeeder::class,
+            EventParticipantSeeder::class,
         ]);
 
         $this->command->info('✅ Database seeded successfully!');
